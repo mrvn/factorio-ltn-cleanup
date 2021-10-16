@@ -4,7 +4,13 @@ local ltn = require("ltn")
 local train_stops = {}
 
 function train_stops.is_cleanup(name)
-    return name ~= nil and string.find(name, "%[virtual%-signal=ltn%-cleanup%-station%]")
+    return name ~= nil and (string.find(name, "%[virtual%-signal=ltn%-cleanup%-station%]")
+                                or string.find(name, "%[img=virtual%-signal/ltn%-cleanup%-station%]"))
+end
+
+function train_stops.is_refuel(name)
+    return name ~= nil and (string.find(name, "%[virtual%-signal=ltn%-refuel%-station%]")
+                                or string.find(name, "%[img=virtual%-signal/ltn%-refuel%-station%]"))
 end
 
 function train_stops.found_any_stops(stops)
@@ -68,6 +74,31 @@ function train_stops.get_all_cleanup(network, carriages, surface)
         stops = stops,
         reverse_lookup = reverse_lookup
     }
+end
+
+function train_stops.get_all_refuel(network, carriages, surface)
+    local stops = {}
+    for _, stop in pairs(game.get_train_stops({surface=surface})) do
+        if stop.valid and train_stops.is_refuel(stop.backer_name) then
+            if network == nil or not ltn.is_ltn_stop(stop.unit_number) or
+            (bit32.band(ltn.get_network(stop.unit_number), network) ~= 0 and ltn.is_carriage_in_limit(stop.unit_number, carriages)) then
+                table.insert(stops, {
+                                id = stop.unit_number,
+                                name = stop.backer_name,
+                })
+            end
+        end
+    end
+
+    return stops
+end
+
+function train_stops.find_depot(name, surface)
+    for _, stop in pairs(game.get_train_stops({name=name, surface=surface})) do
+        if stop.valid and ltn.is_ltn_stop(stop.unit_number) then
+            return stop
+        end
+    end
 end
 
 function train_stops.find_generic_item(stops)
