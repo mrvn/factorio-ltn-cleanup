@@ -20,4 +20,12 @@ function config.calculate_delta()
     return config.get_me("calculate-delta")
 end
 
+function config.min_fuel()
+    return config.get_me("min-fuel-value")
+end
+
+function config.depot_inactivity()
+    return config.get_ltn("depot-inactivity(s)") * 60
+end
+
 return config
